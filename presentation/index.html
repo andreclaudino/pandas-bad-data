@@ -1,0 +1,588 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>reveal.js</title>
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/sky.css">
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+	</head>
+	
+	<body>
+		<div class="reveal">
+			<div class="slides">
+                
+                <section data-markdown>
+                    ## Pandas para ajustar dados
+                </section>
+                
+                <section data-markdown>
+                     Dados para pessoas, e não computadores
+                    ![Planilha para pessoas](img/planilha.png)
+                </section>
+                
+                <section>
+                    <section data-markdown>
+                        ## Carregando no pandas
+                        
+                        ```Python
+                        import pandas as pd
+                        df = pd.read_excel("livrovermelho2013.xls")
+                        df.head(5)
+                        ```
+                    </section>
+                    
+                    <section data-markdown>
+                        Como o Pandas vê
+                        ![Dado bruto carregado no pandas](img/dado-bruto-pandas.png)
+                    </section>
+                </section>
+                
+                <section data-markdown>
+                    ```Python
+                    import math
+
+                    def rename_by_visual_group(df, column_name):
+                        s = df[column_name].copy()
+                        last_val = ''
+                        
+                        # Forma ruim de aplciar algo nas linhas
+                        for i, v in s.iteritems():
+                            if type(v) is not str and math.isnan(v):
+                                s[i] = last_val
+                            else:
+                                last_val = v
+                        df[column_name] = s
+                        return df
+                    ```
+                </section>
+                
+                <section>
+                    <section data-markdown>
+                    ```Python
+                    rename_by_visual_group(df, 'familia aceita')
+                    ```
+                    </section>
+                    
+                    <section data-markdown>
+                        ![Após ajuste no família aceita](img/familia_aceita_group_renamed.png)
+                    </section>
+                </section>
+                
+                <section>
+                    <section data-markdown>
+                    ```Python
+                    rename_by_visual_group(df, 'nome aceito')
+                    rename_by_visual_group(df, 'estado')
+                    rename_by_visual_group(df, 'município')
+                    ```
+                    </section>
+                    
+                    <section data-markdown>
+                        ![Após ajustes de continuidade em grupos](img/grupos_renamed.png)
+                    </section>
+                </section>
+                
+                <section data-markdown>
+                    ## Índices
+                    
+                    ```Python
+                    df['id da ocorrência'].shape[0] ==
+                        df['id da ocorrência'].unique().shape[0]
+                    
+                    |> True
+                    ```
+                </section>
+                
+                <section data-markdown>
+                    ```Python
+                    df.set_index('id da ocorrência', inplace=True)
+                    ```
+                    
+                    ![Índices alterados](img/indices_alterados.png)
+                </section>
+                
+                <section data-markdown>
+                ## Campo observações
+                
+                ```Python
+                df.observações.unique()
+                
+                array([nan,
+                    'Erva rasteira na sombra. Folhas verdes escuras com
+                    nervuras brancas,flores laranjas.',
+                    'Terrestre, herbáceo, botão amarelo, flor amarela,
+                    Seiva Incolor',
+                    ...,
+                    'Projeto Bromélias MA: Táxons MA - Herbários, Restinga
+                    aberta. Pétalas avermelhadas em direção ao ápice...'],
+                    dtype=object)
+                ```
+                </section>
+                
+                <section>
+                    <section data-markdown>
+                        ```Python
+                        def clean_observacao(v):
+                            if type(v) is not str and math.isnan(v):
+                                return ''
+                            else:
+                                return v
+
+                        # Melhor forma de aplciar algo nas linhas
+                        df.observações = df.observações.apply(clean_observacao)
+                        ```
+                    </section>
+                    
+                    <section data-markdown>
+                        ```Python
+                        df[['observações', 'estado']]
+                        ```
+                        
+                        ![Observações sem *NaN*](img/observacoes_sem_nan.png)
+                    </section>
+                </section>
+                
+                <section data-markdown>
+                    ## Outros campos ruins
+                </section>
+                
+                <section>
+                    <section data-markdown>
+                        ### Status SIG
+                        ```Python
+                        df['status SIG'].unique()
+                        |> array(['ok', 'nok', nan], dtype=object)
+                        ```
+                    </section>
+                    
+                    <section data-markdown>
+                        ```Python
+                        df['status SIG'] = df['status SIG']
+                            .apply(lambda v: 
+                                True if v == 'ok' else
+                                    (False if v == 'nok' else None))
+                        ```
+                    </section>
+                    
+                    <section data-markdown>
+                        ```Python
+                        df['status SIG'] = df['status SIG']
+                            .apply(lambda v: 
+                                True if v == 'ok' else
+                                    (False if v == 'nok' else None))
+                        
+                        df['status SIG'].unique()
+                        |> array([True, False, None], dtype=object)
+                        ```
+                    </section>
+                    
+                </section>
+                
+                <section>
+                    <section data-markdown>
+                        ### Mês da coleta
+                        ```Python
+                        meses = list(df['mês da coleta'].unique())
+                        meses.sort()
+                        meses
+                        
+                        |> [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0,
+                            9.0, 10.0, 11.0, 12.0, nan, 13.0, 20.0, 23.0,
+                                60.0, 71.0]
+                        ```
+                    </section>
+                    
+                    <section data-markdown>
+                        Transforma *NaN* em 0 e o restante em inteiro
+                        
+                        ```Python
+                        df['mês da coleta'] = df['mês da coleta']
+                            .apply(lambda v: 0 if math.isnan(v) else math.ceil(v) )
+                        df['mês da coleta']
+                        ```
+                    </section>
+                    
+                    <section data-markdown>
+                        dados que tenham meses de coleta maiores que 12 são inválidos
+                        ```Python
+                        def invalidate_by_month(row):
+                            return False if row['mês da coleta'] > 12 else row.válido
+                        
+                        # Usando o apply para o DataFrame inteiro
+                        df.válido = df.T.apply(invalidate_by_month)
+                        ```
+                    </section>
+                    
+                    <section data-markdown>
+                        ```Python
+                        df[df['mês da coleta'] <= 12][['mês da coleta', 'válido']]
+                            .head(8)
+                        ```
+                        ![Mês da coleta](img/mes_da_coleta_menor_que_12.png)
+                    </section>
+                    
+                    <section data-markdown>
+                        ```Python
+                        df[df['mês da coleta'] > 12][['mês da coleta', 'válido']]
+                            .head(8)
+                        ```
+                        ![Mês da coleta](img/mes_da_coleta_maior_que_12.png)
+                    </section>
+                    
+                    <section data-markdown>
+                        ```Python
+                        df[df['mês da coleta'] == 0][['mês da coleta', 'válido']]
+                            .head(8)
+                        ```
+                        ![Mês da coleta](img/mes_da_coleta_0.png)
+                    </section>
+                </section>
+                
+                <section>
+                    <section data-markdown>
+                    ### Dia da coleta
+                    </section>
+                    
+                    <section data-markdown>
+                    ```Python
+                        df['dia da coleta'].unique()    
+                        |> array([ 
+                            1.50000000e+01,   2.30000000e+01,   2.10000000e+01,
+                            1.00000000e+00,   2.60000000e+01,   1.70000000e+01,
+                            1.20000000e+01,   2.50000000e+01,   3.00000000e+00,
+                            2.40000000e+01,              nan,   8.00000000e+00,
+                            2.70000000e+01,   2.00000000e+01,   6.00000000e+00,
+                            9.00000000e+00,   3.00000000e+01,   4.00000000e+00,
+                            5.00000000e+00,   1.30000000e+01,   1.60000000e+01,
+                            1.80000000e+01,   2.80000000e+01,   1.10000000e+01,
+                            2.90000000e+01,   1.40000000e+01,   2.00000000e+00,
+                            1.90000000e+01,   2.20000000e+01,   1.00000000e+01,
+                            3.10000000e+01,   7.00000000e+00,   0.00000000e+00,
+                            1.93400000e+03,   1.98200000e+03,   3.20000000e+01])
+                    ```
+                    </section>
+                    
+                    <section data-markdown>
+                        Todos os dias
+                        ```Python
+                        df['dia da coleta'].hist()
+                        ```
+                        ![Dias da coleta](img/dias_da_coleta.png)
+                    </section>
+                    
+                    <section data-markdown>
+                        Maiores que 31
+                        ```Python
+                        df['dia da coleta'][lambda v: v > 31].hist()
+                        ```
+                        ![Dias da coleta](img/dias_da_coleta_maiores_que_31.png)
+                    </section>
+                    
+                    <section data-markdown>
+                        ```Python
+                        df['dia da coleta'][lambda v: v <= 31].hist()
+                        ```
+                        ![Dias de coleta válidos](img/dias_de_coleta_validos.png)
+                    </section>
+                    
+                    <section data-markdown>
+                        ```Python
+                        df['dia da coleta'][lambda v: v == 0].hist()
+                        ```
+                        ![Dias de coleta válidos](img/dias_de_coleta_iguais_a_zero.png)
+                    </section>
+                    
+                    <section data-markdown>
+                        ```Python
+                        def invalidate_by_day(row):
+                            return None if row['dia da coleta'] == 0
+                                else (False if row['dia da coleta'] > 31
+                                    else row.válido)
+                            
+                        df.válido = df.T.apply(invalidate_by_day)
+                        ```
+                    </section>
+                    
+                    <section data-markdown>
+                        ```Python
+                        df[(df['dia da coleta'] > 31) | (df['dia da coleta'] == 0)]
+                            [['dia da coleta', 'válido']].head(10)
+                        ```
+                        
+                        ![Dados de coleta válidos](img/dias_de_coleta_maiores_que_31_ou_nulos.png)
+                    </section>
+                    
+                    <section data-markdown>
+                        ```Python
+                        df[(df['dia da coleta'] > 31) | (df['dia da coleta'] == 0)]
+                            [['dia da coleta', 'válido']].head(10)
+                        ```
+                        
+                        ![Dados de coleta válidos](img/dias_de_coleta_menores_que_31_nao_nulos.png)
+                    </section>
+                </section>
+                
+                <section>
+                    <section data-markdown>
+                        ## Identificado Por
+                    </section>
+                    
+                    <section data-markdown>
+                    ```Python
+                    df[['identificado por', 'válido']]
+                    ```
+                    ![Identificado por](img/identificado_por.png)
+                    </section>
+                    
+                    <section data-markdown>
+                    ```Python
+                    df['identificado por'] = df['identificado por']
+                        .apply(lambda v: "" if type(v) is not str and
+                            math.isnan(v) else v)
+                    ```
+                    ![Identificado por](img/identificado_por_sem_nan.png)
+                    </section>
+
+                    <section data-markdown>
+                    ```Python
+                    df['identificado por'] = df['identificado por']
+                        .apply(lambda v: "" if v == 0 else v)
+                    ```
+                    ![Identificado por](img/identificado_por_e_coletor_apos_ajuste_do_0.png)
+                    </section>
+                </section>
+                
+                <section>
+                    <section data-markdown>
+                        ## Literatura
+                    </section>
+                    
+                    <section data-markdown>
+                    ```Python
+                    df.literatura.head(8)
+                    |> id da ocorrência
+                        54c7ca1f3d7b2    NaN
+                        54c7ca1f3d839    NaN
+                        54c7ca1f3d8bb    NaN
+                        54c7ca1f3d93b    NaN
+                        54c7ca1f3d9bc    NaN
+                        54c7ca1f3da3d    NaN
+                        54c7ca1f3dabc    NaN
+                        54c7ca5212870    NaN
+                        Name: literatura, dtype: object
+                    ```
+                    </section>
+                    
+                    <section data-markdown>
+                        ```Python
+                        df.literatura = df.literatura.apply(lambda v: "" if type(v) is not str and math.isnan(v) else v)
+                        df.literatura.head(8)
+                        |> id da ocorrência
+                            54c7ca1f3d7b2    
+                            54c7ca1f3d839    
+                            54c7ca1f3d8bb    
+                            54c7ca1f3d93b    
+                            54c7ca1f3d9bc    
+                            54c7ca1f3da3d    
+                            54c7ca1f3dabc    
+                            54c7ca5212870    
+                            Name: literatura, dtype: object
+                        ```
+                    </section>
+                
+                </section>
+                
+                <section>
+                
+                    <section data-markdown>
+                        ## Còdigo da instituição
+                    </section>
+                    
+                    <section data-markdown>
+                        ```Python
+                        df['código da instituição'].unique()
+                        |> array([ nan])
+                        ```
+                    </section>
+                    
+                    <section data-markdown>
+                        ```Python
+                        df.drop('código da instituição', axis=1, inplace=True)
+                        df.columns
+                        |> Index(['familia aceita', 'nome aceito', 'literatura',
+                            'código da coleção', 'número de catálogo/código de barras',
+                            'número do coletor', 'coletor', 'ano da coleta',
+                            'mês da coleta', 'dia da coleta', 'identificado por',
+                            'estado', 'município', 'localidade', 'latitude',
+                            'longitude', 'família', 'nome científico', 'status SIG',
+                            'válido', 'observações'], dtype='object')
+                        ```    
+                    </section>
+                    
+                </section>
+                
+                <section>
+                    <section data-markdown>
+                    ## Estado
+                    </section>
+                    
+                    <section data-markdown>
+                        ```Python
+                        df.estado.unique()
+                        |> array(['ES', nan, 'BA', 'MG', 'RJ', 'SC', 'MT', 'PR', 'SP', 'RR', 'DF',
+                        'GO', 'CE', 'RO', 'MS', 'RS', 'Espírito Santo', 'SE', 'AL', 'mg',
+                        'TO', 'Minas Gerais', 'Goiás', 'Distrito Federal', 'PE', 'PA', 'AM',
+                        'Mato Grosso Norte', 'PB', 'Centro', 'Bahia', 'RN',
+                        'Espirito Santo', 'AC', 'Alagoas', 'Ceará', 'Paraíba',
+                        'Mato Grosso', 'São Paulo', 'PI', 'Quatipuru', 'Pernambuco', 'MA',
+                        'Uf Nao Selecionada', 'Santa Catarina', 'Rio Grande do Sul',
+                        'Paraná', 'Tocantins', 'Rio de Janeiro', 'AP', 'ND', 'rj',
+                        'Corrientes', 'Barcelos', 'Mato Grosso do Sul', 'Mato Grosso Sul',
+                        'Yaracuy', 'Maranhão', 'Pará', 'Piauí', 'Amazonas', 'Oaxaca',
+                        'Chiapas', 'Cordillera', 'Guanabara', 'Buenos Aires', 'RondÃ´nia',
+                        'Rondônia', 'Merida', 'Misiones', 'Paraguarí', 'Piauhy', 'ba'], dtype=object)
+                        ```
+                    </section>
+                    
+                    <section data-markdown>
+                    ```Python
+                    get_none = lambda _: None
+                    estado_replaces = [
+                        ('Minas Gerais', 'MG'),
+                        ('Goiás', 'GO'),
+                        ('Distrito Federal', 'DF'),
+                        ('Mato Grosso Norte', 'MT'),
+                        ('Centro', get_none),
+                        ('Bahia', 'BA'),
+                        ('Espirito Santo', 'ES'),
+                        ('São Paulo', 'SP'),
+                        ('Quatipuru', get_none),
+                        ('Pernambuco', 'PE'),
+                        ('Uf Nao Selecionada', '-'),
+                        ('Santa Catarina', 'SC'),
+                        ('Rio Grande do Sul', 'RS'),
+                        ('Paraná', 'PA'),
+                        ('Tocantins', 'TO'),
+                        ('Rio de Janeiro', 'RJ'),
+                        ('ND', '-'),
+                        ('rj', 'RJ'),
+                        ('Corrientes', get_none),
+                        ('Barcelos', get_none),
+                        ('Mato Grosso do Sul', 'MS'),
+                        ('Mato Grosso Sul', 'MS'),
+                        ('Yaracuy', get_none),
+                        ('Maranhão', 'MA'),
+                        ('Pará', 'PA'),
+                        ('Piauí', 'PI'),
+                        ('Amazonas', 'AM'),
+                        ('Oaxaca', get_none),
+                        ('Chiapas', get_none),
+                        ('Cordillera', get_none),
+                        ('Guanabara', get_none),
+                        ('Buenos Aires', get_none),
+                        ('RondÃ´nia', get_none),
+                        ('Rondônia', 'RO'),
+                        ('Merida', get_none),
+                        ('Misiones', get_none),
+                        ('Paraguarí', get_none),
+                        ('Piauhy', get_none),
+                        ('ba', 'BA'),
+                        ('Ceará', 'CE'),
+                        ('ParaíBA', 'PB'),
+                        ('Mato Grosso', 'MT'),
+                        ('Espírito Santo', 'ES')]
+                    ```
+                    </section>
+                    
+                    <section data-markdown>
+                    ```Python
+                    for estado in estado_replaces:
+                        df.estado = df.estado.str.replace(*estado)
+                    ```
+                    </section>
+                    
+                    <section data-markdown>
+                    ```Python
+                    df.estado.unique()
+                    |> array(['ES', nan, 'BA', 'MG', 'RJ', 'SC', 'MT', 'PR', 'SP', 'RR', 'DF',
+                    'GO', 'CE', 'RO', 'MS', 'RS', 'SE', 'AL', 'mg', 'TO', 'PE', 'PA',
+                    'AM', 'PB', '', 'RN', 'AC', 'Alagoas', 'PI', 'MA', '-', 'AP'], dtype=object)
+                    ```
+                    </section>
+                </section>
+                
+                <section>
+                    <section data-markdown>
+                        ## Salvando
+                    </section>
+                    
+                    <section data-markdown>
+                    Pickle
+                    ```Python
+                    df.to_pickle('../resources/dados_ajustados.npz',
+                        compression='gzip')
+                    ```
+                    </section>
+                    
+                    <section data-markdown>
+                    XLS
+                    ```Python
+                    df.to_excel('../resources/dados_ajustados.xls')
+                    ```
+                    </section>
+                    
+                    <section data-markdown>
+                    CSV
+                    ```Python
+                    df.to_csv('../resources/dados_ajustados.csv', sep="|")
+                    ```
+                    </section>
+                    
+                    <section data-markdown>
+                        from_csv, from_dict, from_items
+                        from_records, to_pickle, to_csv
+                        to_hdf, to_sql, to_dict, to_excel
+                        to_json, to_html, to_latex
+                        to_stata, to_msgpack, to_gbq
+                        to_records, to_sparse, to_dense
+                        to_string, to_clipboard
+                    </section>
+                </section>                
+			</div>
+			
+			
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+			// More info about config & dependencies:
+			// - https://github.com/hakimel/reveal.js#configuration
+			// - https://github.com/hakimel/reveal.js#dependencies
+			Reveal.initialize({
+				dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+		</script>
+	</body>
+</html>
