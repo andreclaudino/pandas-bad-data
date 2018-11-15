@@ -1,4 +1,4 @@
-# Apresentação que fiz na [PythonOn Rio XXII](http://pythonrio.python.org.br/evento/), sobre Python Para Data Science
+# Apresentação que fiz na [PythonOn Rio XXII](http://pythonrio.python.org.br/evento/), sobre Pndas Para Data Science
 
 A apresentação foi focada no uso de [Pandas]() para tratamento de [Bad Data](http://pythonrio.python.org.br/evento/), ou seja, limpeza de dados ruins.
 
