@@ -10,7 +10,7 @@ Os notebooks utilizados na apresentação estão englobados num [virtualenv](htt
     * A planilha original foi obtida [deste link](http://dados.gov.br/dataset/ocorrencias-livro-vermelho-2013), e tem licença [Creative Commons](http://opendefinition.org/od/2.0/pt-br/)
     * Os notebooks estão disponibilizados para uso gratuito para fins lucrativos ou não, porém, solicito encarecidamente que cite a fonte:
 
-> André Claudino (@andreclaudino[https://github.com/andreclaudino/])  
+> André Claudino ([@andreclaudino](https://github.com/andreclaudino/))  
 > Pandas Para Bad Data  
 > [https://github.com/andreclaudino/pandas-bad-data](https://github.com/andreclaudino/pythonOnRioXXII-IA)  
 
